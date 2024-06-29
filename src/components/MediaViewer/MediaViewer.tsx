@@ -2,7 +2,7 @@
 
 import {  useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Blend, ChevronLeft, ChevronDown, Crop, Info, Pencil, Trash2, Wand2, Image, Ban } from 'lucide-react';
+import { Blend, ChevronLeft, ChevronDown, Crop, Info, Pencil, Trash2, Wand2, Image, Ban, PencilRuler, Replace } from 'lucide-react';
 
 import Container from '@/components/Container';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -10,21 +10,41 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ResourcesTypes } from '@/app/types/types';
+import { CldImage, CldImageProps } from 'next-cloudinary';
 
 interface Deletion {
   state: string;
 }
 
-const MediaViewer = ({ resource }: { resource: { id: string; width: number; height: number; } }) => {
+interface MediaProps {
+  resource: Array<ResourcesTypes>
+}
+
+const MediaViewer = ({ resource }: MediaProps) => {
   const sheetFiltersRef = useRef<HTMLDivElement | null>(null);
   const sheetInfoRef = useRef<HTMLDivElement | null>(null);
-
   // Sheet / Dialog UI state, basically controlling keeping them open or closed
 
   const [filterSheetIsOpen, setFilterSheetIsOpen] = useState(false);
   const [infoSheetIsOpen, setInfoSheetIsOpen] = useState(false);
   const [deletion, setDeletion] = useState<Deletion>();
+  const [enhance, setEnhance] = useState<string>();
 
+  const handleEnhance = (transformation: string) => {
+    setEnhance(transformation);
+  }
+
+  type Transformation = Omit<CldImageProps, 'src' | 'alt'>
+  const transformation:Transformation = {}
+  console.log("this is",enhance)
+  if(enhance === 'restore'){
+    transformation.restore = true
+  }else if (enhance === 'enhance'){
+    transformation.enhance = true
+  }else if (enhance === 'removeBackground'){
+    transformation.removeBackground = true
+  }
   // Canvas sizing based on the image dimensions. The tricky thing about
   // showing a single image in a space like this in a responsive way is trying
   // to take up as much room as possible without distorting it or upscaling
@@ -32,8 +52,8 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
   // determine whether it's landscape, portrait, or square, and change a little
   // CSS to make it appear centered and scalable!
 
-  const canvasHeight = resource.height;
-  const canvasWidth = resource.width;
+  const canvasHeight = resource[0].height;
+  const canvasWidth = resource[0].width;
 
   const isSquare = canvasHeight === canvasWidth;
   const isLandscape = canvasWidth > canvasHeight;
@@ -42,11 +62,11 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
   const imgStyles: Record<string, string | number> = {};
 
   if ( isLandscape ) {
-    imgStyles.maxWidth = resource.width;
+    imgStyles.maxWidth = resource[0].width;
     imgStyles.width = '100%';
     imgStyles.height = 'auto';
   } else if ( isPortrait || isSquare ) {
-    imgStyles.maxHeight = resource.height;
+    imgStyles.maxHeight = resource[0].height;
     imgStyles.height = '100vh';
     imgStyles.width = 'auto'
   }
@@ -140,10 +160,34 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
                 <SheetTitle className="text-zinc-400 text-sm font-semibold">Enhancements</SheetTitle>
               </SheetHeader>
               <ul className="grid gap-2">
-                <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}>
+                <li >
+                  <Button
+                  variant="ghost"
+                  onClick={() => handleEnhance('undefined')}
+                  className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}>
                     <Ban className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">None</span>
+                  </Button>
+                  <Button 
+                  variant="ghost"
+                  onClick={() => handleEnhance('restore')}
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                    <PencilRuler className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">Restore</span>
+                  </Button>
+                  <Button 
+                  variant="ghost" 
+                  onClick={() => handleEnhance('enhance')}
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                    <Wand2 className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">enhance</span>
+                  </Button>
+                  <Button 
+                  variant="ghost"
+                  onClick={() => handleEnhance('removeBackground')}
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                    <Replace className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">removeBackground</span>
                   </Button>
                 </li>
               </ul>
@@ -168,11 +212,14 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
               <ul className="grid grid-cols-2 gap-2">
                 <li>
                   <button className={`w-full border-4 border-white`}>
-                    <img
-                      width={resource.width}
-                      height={resource.height}
-                      src="/icon-1024x1024.png"
-                      alt="No Filter"
+                    <CldImage
+                      width={resource[0].width}
+                      height={resource[0].height}
+                      src={resource[0].public_id}
+                      sizes="(max-width: 768px) 50vw,
+                      (max-width: 1200px) 33vw,
+                      25vw"
+                      alt={`image ${resource[0].public_id}`}
                     />
                   </button>
                 </li>
@@ -237,7 +284,7 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
               <li className="mb-3">
                 <strong className="block text-xs font-normal text-zinc-400 mb-1">ID</strong>
                 <span className="flex gap-4 items-center text-zinc-100">
-                  { resource.id }
+                  { resource[0].public_id }
                 </span>
               </li>
             </ul>
@@ -292,12 +339,16 @@ const MediaViewer = ({ resource }: { resource: { id: string; width: number; heig
       {/** Asset viewer */}
 
       <div className="relative flex justify-center items-center align-center w-full h-full">
-        <img
+        <CldImage
           className="object-contain"
-          width={resource.width}
-          height={resource.height}
-          src="/icon-1024x1024.png"
-          alt="Cloudinary Logo"
+          width={resource[0].width}
+          height={resource[0].height}
+          src={resource[0].public_id}
+          sizes="(max-width: 768px) 50vw,
+          (max-width: 1200px) 33vw,
+          25vw"
+          {...transformation}
+          alt={`image ${resource[0].public_id}`}
           style={imgStyles}
         />
       </div>
