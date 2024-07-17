@@ -30,20 +30,49 @@ const MediaViewer = ({ resource }: MediaProps) => {
   const [infoSheetIsOpen, setInfoSheetIsOpen] = useState(false);
   const [deletion, setDeletion] = useState<Deletion>();
   const [enhance, setEnhance] = useState<string>();
+  const [crop, setCrop] = useState<string>();
 
   const handleEnhance = (transformation: string) => {
     setEnhance(transformation);
   }
 
+  const handleCrop = (crop: string) => {
+    setCrop(crop);
+  }
+
   type Transformation = Omit<CldImageProps, 'src' | 'alt'>
   const transformation:Transformation = {}
-  console.log("this is",enhance)
   if(enhance === 'restore'){
     transformation.restore = true
   }else if (enhance === 'enhance'){
     transformation.enhance = true
   }else if (enhance === 'removeBackground'){
     transformation.removeBackground = true
+  }
+
+  if(crop === 'square'){
+    if(resource[0].width > resource[0].height){
+      transformation.height = resource[0].width
+    }else {
+      transformation.width = resource[0].height
+    }
+
+    transformation.crop = {
+      source: true,
+      type: 'fill'
+    }
+  } else if (crop === 'landscape'){
+    transformation.height = Math.floor(resource[0].width / (16/9))
+    transformation.crop = {
+      source: true,
+      type: 'fill'
+    }
+  } else if (crop === 'portrait'){
+    transformation.width = Math.floor(resource[0].height / (16/9));
+    transformation.crop = {
+      source: true,
+      type: 'fill'
+    }
   }
   // Canvas sizing based on the image dimensions. The tricky thing about
   // showing a single image in a space like this in a responsive way is trying
@@ -52,8 +81,8 @@ const MediaViewer = ({ resource }: MediaProps) => {
   // determine whether it's landscape, portrait, or square, and change a little
   // CSS to make it appear centered and scalable!
 
-  const canvasHeight = resource[0].height;
-  const canvasWidth = resource[0].width;
+  const canvasHeight =  transformation.height || resource[0].height;
+  const canvasWidth = transformation.height || resource[0].width;
 
   const isSquare = canvasHeight === canvasWidth;
   const isLandscape = canvasWidth > canvasHeight;
@@ -198,9 +227,35 @@ const MediaViewer = ({ resource }: MediaProps) => {
               </SheetHeader>
               <ul className="grid gap-2">
                 <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}>
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                  onClick={() => handleCrop('undefined')}
+                  >
                     <Image className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">Original</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                   onClick={() => handleCrop('square')}
+                  >
+                    <Image className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">Square</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                    onClick={() => handleCrop('landscape')}
+                  >
+                    <Image className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">Landscape</span>
+                  </Button>
+                </li>
+                <li>
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                   onClick={() => handleCrop('portrait')}
+                  >
+                    <Image className="w-5 h-5 mr-3" />
+                    <span className="text-[1.01rem]">Portrait</span>
                   </Button>
                 </li>
               </ul>
