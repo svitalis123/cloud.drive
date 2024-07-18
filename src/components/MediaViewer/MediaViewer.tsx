@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ResourcesTypes } from '@/app/types/types';
-import { CldImage, CldImageProps } from 'next-cloudinary';
+import { CldImageProps } from 'next-cloudinary';
+import CldImage from './CldImage';
+import { json } from 'stream/consumers';
 
 interface Deletion {
   state: string;
@@ -31,6 +33,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
   const [deletion, setDeletion] = useState<Deletion>();
   const [enhance, setEnhance] = useState<string>();
   const [crop, setCrop] = useState<string>();
+  const [ filter, setFilter] = useState<string>();
 
   const handleEnhance = (transformation: string) => {
     setEnhance(transformation);
@@ -74,6 +77,13 @@ const MediaViewer = ({ resource }: MediaProps) => {
       type: 'fill'
     }
   }
+
+  if(typeof filter === "string" && ['grayscale', 'sepia'].includes(filter)){
+    transformation[filter as keyof Transformation] = true
+  }else if (typeof filter === "string" && ['sizzle', 'sonnet'].includes(filter)){
+    transformation.art = filter
+  }
+
   // Canvas sizing based on the image dimensions. The tricky thing about
   // showing a single image in a space like this in a responsive way is trying
   // to take up as much room as possible without distorting it or upscaling
@@ -82,7 +92,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
   // CSS to make it appear centered and scalable!
 
   const canvasHeight =  transformation.height || resource[0].height;
-  const canvasWidth = transformation.height || resource[0].width;
+  const canvasWidth = transformation.width || resource[0].width;
 
   const isSquare = canvasHeight === canvasWidth;
   const isLandscape = canvasWidth > canvasHeight;
@@ -266,10 +276,87 @@ const MediaViewer = ({ resource }: MediaProps) => {
               </SheetHeader>
               <ul className="grid grid-cols-2 gap-2">
                 <li>
-                  <button className={`w-full border-4 border-white`}>
+                  <button
+                    className={`w-full border-4 border-white`}
+                    onClick={() => setFilter(undefined)}
+                    >
                     <CldImage
-                      width={resource[0].width}
-                      height={resource[0].height}
+                      key={JSON.stringify(transformation)}
+                      width={156}
+                      height={156}
+                      crop="fill"
+                      src={resource[0].public_id}
+                      sizes="(max-width: 768px) 50vw,
+                      (max-width: 1200px) 33vw,
+                      25vw"
+                      alt={`image ${resource[0].public_id}`}
+                    />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`w-full border-4 border-white`}
+                    onClick={() => setFilter('sepia')}
+                    >
+                    <CldImage
+                      width={156}
+                      sepia
+                      height={156}
+                      crop="fill"
+                      src={resource[0].public_id}
+                      sizes="(max-width: 768px) 50vw,
+                      (max-width: 1200px) 33vw,
+                      25vw"
+                      alt={`image ${resource[0].public_id}`}
+                    />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`w-full border-4 border-white`}
+                    onClick={() => setFilter('sonnet')}
+                    >
+                    <CldImage
+                      width={156}
+                      art='sonnet'
+                      height={156}
+                      crop="fill"
+                      src={resource[0].public_id}
+                      sizes="(max-width: 768px) 50vw,
+                      (max-width: 1200px) 33vw,
+                      25vw"
+                      alt={`image ${resource[0].public_id}`}
+                    />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`w-full border-4 border-white`}
+                    onClick={() => setFilter('grayscale')}
+                    >
+                    <CldImage
+                      width={156}
+                      grayscale
+                      height={156}
+                      crop="fill"
+                      src={resource[0].public_id}
+                      sizes="(max-width: 768px) 50vw,
+                      (max-width: 1200px) 33vw,
+                      25vw"
+                      alt={`image ${resource[0].public_id}`}
+                    />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className={`w-full border-4 border-white`}
+                    onClick={() => setFilter('sizzle')}
+                    >
+                    <CldImage
+                      width={156}
+                      art='sizzle'
+                      height={156}
+                      crop="fill"
                       src={resource[0].public_id}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
