@@ -2,7 +2,7 @@
 
 import {  useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Blend, ChevronLeft, ChevronDown, Crop, Info, Pencil, Trash2, Wand2, Image, Ban, PencilRuler, Replace } from 'lucide-react';
+import { Blend, ChevronLeft, ChevronDown, Crop, Info, Pencil, Trash2, Wand2, Image, Ban, PencilRuler, Replace, Loader2 } from 'lucide-react';
 
 import Container from '@/components/Container';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -11,11 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ResourcesTypes } from '@/app/types/types';
-import { CldImageProps } from 'next-cloudinary';
+import { CldImageProps, getCldImageUrl } from 'next-cloudinary';
 import CldImage from './CldImage';
-import { json } from 'stream/consumers';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Deletion {
+  state: string;
+}
+
+interface Saving {
   state: string;
 }
 
@@ -24,17 +29,22 @@ interface MediaProps {
 }
 
 const MediaViewer = ({ resource }: MediaProps) => {
+  const router = useRouter();
+  const queryclient = useQueryClient();
+
   const sheetFiltersRef = useRef<HTMLDivElement | null>(null);
   const sheetInfoRef = useRef<HTMLDivElement | null>(null);
   // Sheet / Dialog UI state, basically controlling keeping them open or closed
 
+  const [version, setVersion] = useState<number>(0);
   const [filterSheetIsOpen, setFilterSheetIsOpen] = useState(false);
   const [infoSheetIsOpen, setInfoSheetIsOpen] = useState(false);
   const [deletion, setDeletion] = useState<Deletion>();
+  const [saving, setSaving]=useState<Saving>();
   const [enhance, setEnhance] = useState<string>();
   const [crop, setCrop] = useState<string>();
   const [ filter, setFilter] = useState<string>();
-
+ 
   const handleEnhance = (transformation: string) => {
     setEnhance(transformation);
   }
@@ -84,6 +94,9 @@ const MediaViewer = ({ resource }: MediaProps) => {
     transformation.art = filter
   }
 
+  // length of transformations
+
+  const hasTransformations = Object.entries(transformation).length > 0;
   // Canvas sizing based on the image dimensions. The tricky thing about
   // showing a single image in a space like this in a responsive way is trying
   // to take up as much room as possible without distorting it or upscaling
@@ -121,6 +134,17 @@ const MediaViewer = ({ resource }: MediaProps) => {
     setDeletion(undefined)
   }
 
+   /**
+   * resetTransformations
+   */
+
+
+  function resetTransformations() {
+    setCrop(undefined)
+    setEnhance(undefined)
+    setFilter(undefined)
+  }
+
   /**
    * handleOnDeletionOpenChange
    */
@@ -130,6 +154,105 @@ const MediaViewer = ({ resource }: MediaProps) => {
     if ( !isOpen ) {
       setDeletion(undefined);
     }
+  }
+
+   /**
+   * handlesave
+   */
+
+   async function handleSave(){
+    if(saving?.state === 'saving'){
+      return
+    }
+    setSaving({state: 'saving'});
+    const url = getCldImageUrl({
+      width: resource[0].width,
+      height: resource[0].height,
+      src: resource[0].public_id,
+      format: 'default',
+      quality: 'default',
+      ...transformation
+    })
+
+    await fetch(url)
+
+    try {
+      const results  = await fetch('/api/saver', {
+        method: 'POST',
+        body: JSON.stringify({
+          publicId: resource[0].public_id,
+          url        
+        })
+      }).then(response => response.json())
+  
+      invalidatequeries();
+      resetTransformations();
+      closeMenus();
+      setVersion(Date.now());
+    } catch (error) {
+      console.error(error)
+    }
+    
+   }
+
+   async function handleSaveCopy(){
+    if(saving?.state === 'savingcopy'){
+      return
+    }
+    setSaving({state: 'savingcopy'});
+    const url = getCldImageUrl({
+      width: resource[0].width,
+      height: resource[0].height,
+      src: resource[0].public_id,
+      format: 'default',
+      quality: 'default',
+      ...transformation
+    })
+
+    await fetch(url)
+
+    try {
+      const {data}  = await fetch('/api/saver', {
+        method: 'POST',
+        body: JSON.stringify({
+          url        
+        })
+      }).then(response => response.json())
+      invalidatequeries()
+      router.push(`/resources/${data.asset_id}`)
+    } catch (error) {
+      console.error(error)
+    }
+   }
+
+
+  //  handle deletion  of assets
+
+  async function handleDelete(){
+    if(deletion?.state === 'deleting'){
+      return
+    }
+    setDeletion({state: 'deleting'});
+    try {
+      const results = await fetch('/api/deleteasset', {
+        method: 'POST',
+        body: JSON.stringify({
+          publicId: resource[0].public_id
+        })
+      })
+      invalidatequeries();
+      router.push('/')
+    } catch (error) {
+      console.error(error)
+    }
+    
+  }
+
+
+  // function to invalidate queries using isequeryclient
+
+  function invalidatequeries(){
+    queryclient.invalidateQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]})
   }
 
   // Listen for clicks outside of the panel area and if determined
@@ -158,14 +281,17 @@ const MediaViewer = ({ resource }: MediaProps) => {
 
       {/** Modal for deletion */}
 
-      <Dialog open={!!deletion?.state} onOpenChange={handleOnDeletionOpenChange}>
+      <Dialog open={deletion && ['confirm', 'deleting'].includes(deletion.state)} onOpenChange={handleOnDeletionOpenChange}>
         <DialogContent data-exclude-close-on-click={true}>
           <DialogHeader>
             <DialogTitle className="text-center">Are you sure you want to delete?</DialogTitle>
           </DialogHeader>
           <DialogFooter className="justify-center sm:justify-center">
-            <Button variant="destructive">
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
+            <Button variant="destructive" onClick={handleDelete}>
+              {
+                deletion?.state === 'deleting' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />
+              }
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -203,28 +329,28 @@ const MediaViewer = ({ resource }: MediaProps) => {
                   <Button
                   variant="ghost"
                   onClick={() => handleEnhance('undefined')}
-                  className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}>
+                  className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 ${!enhance ? 'border-white bg-white text-zinc-700' : 'border-white' }`}>
                     <Ban className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">None</span>
                   </Button>
                   <Button 
                   variant="ghost"
                   onClick={() => handleEnhance('restore')}
-                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 ${enhance === "restore" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}>
                     <PencilRuler className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">Restore</span>
                   </Button>
                   <Button 
                   variant="ghost" 
                   onClick={() => handleEnhance('enhance')}
-                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 ${enhance === "enhance" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}>
                     <Wand2 className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">enhance</span>
                   </Button>
                   <Button 
                   variant="ghost"
                   onClick={() => handleEnhance('removeBackground')}
-                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 border-white`}>
+                  className={`text-left justify-start mt-2 w-full h-14 border-4 bg-zinc-700 ${enhance === "removeBackground" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}>
                     <Replace className="w-5 h-5 mr-3" />
                     <span className="text-[1.01rem]">removeBackground</span>
                   </Button>
@@ -237,7 +363,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
               </SheetHeader>
               <ul className="grid gap-2">
                 <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 ${!crop ? 'border-white bg-white text-zinc-700' : 'border-white' }`}
                   onClick={() => handleCrop('undefined')}
                   >
                     <Image className="w-5 h-5 mr-3" />
@@ -245,7 +371,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
                   </Button>
                 </li>
                 <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 ${crop === "square" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}
                    onClick={() => handleCrop('square')}
                   >
                     <Image className="w-5 h-5 mr-3" />
@@ -253,7 +379,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
                   </Button>
                 </li>
                 <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 ${crop === "landscape" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}
                     onClick={() => handleCrop('landscape')}
                   >
                     <Image className="w-5 h-5 mr-3" />
@@ -261,7 +387,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
                   </Button>
                 </li>
                 <li>
-                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 border-white`}
+                  <Button variant="ghost" className={`text-left justify-start w-full h-14 border-4 bg-zinc-700 ${crop === "portrait" ? 'border-white bg-white text-zinc-700' : 'border-white' }`}
                    onClick={() => handleCrop('portrait')}
                   >
                     <Image className="w-5 h-5 mr-3" />
@@ -277,7 +403,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
               <ul className="grid grid-cols-2 gap-2">
                 <li>
                   <button
-                    className={`w-full border-4 border-white`}
+                    className={`w-full border-4 ${!filter ? 'border-white bg-white text-zinc-700' : 'border-transparent' }`}
                     onClick={() => setFilter(undefined)}
                     >
                     <CldImage
@@ -285,7 +411,7 @@ const MediaViewer = ({ resource }: MediaProps) => {
                       width={156}
                       height={156}
                       crop="fill"
-                      src={resource[0].public_id}
+                      src={resource[0].secure_url}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
                       25vw"
@@ -295,15 +421,16 @@ const MediaViewer = ({ resource }: MediaProps) => {
                 </li>
                 <li>
                   <button
-                    className={`w-full border-4 border-white`}
+                    className={`w-full border-4 ${filter === "sepia" ? 'border-white bg-white text-zinc-700' : 'border-transparent' }`}
                     onClick={() => setFilter('sepia')}
                     >
                     <CldImage
+                      key={JSON.stringify(transformation)}
                       width={156}
                       sepia
                       height={156}
                       crop="fill"
-                      src={resource[0].public_id}
+                      src={resource[0].secure_url}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
                       25vw"
@@ -313,15 +440,16 @@ const MediaViewer = ({ resource }: MediaProps) => {
                 </li>
                 <li>
                   <button
-                    className={`w-full border-4 border-white`}
+                    className={`w-full border-4 ${filter === "sonnet" ? 'border-white bg-white text-zinc-700' : 'border-transparent' }`}
                     onClick={() => setFilter('sonnet')}
                     >
                     <CldImage
+                      key={JSON.stringify(transformation)}  
                       width={156}
                       art='sonnet'
                       height={156}
                       crop="fill"
-                      src={resource[0].public_id}
+                      src={resource[0].secure_url}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
                       25vw"
@@ -331,15 +459,16 @@ const MediaViewer = ({ resource }: MediaProps) => {
                 </li>
                 <li>
                   <button
-                    className={`w-full border-4 border-white`}
+                    className={`w-full border-4 ${filter === "grayscale" ? 'border-white bg-white text-zinc-700' : 'border-transparent' }`}
                     onClick={() => setFilter('grayscale')}
                     >
                     <CldImage
+                      key={JSON.stringify(transformation)}
                       width={156}
                       grayscale
                       height={156}
                       crop="fill"
-                      src={resource[0].public_id}
+                      src={resource[0].secure_url}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
                       25vw"
@@ -349,15 +478,16 @@ const MediaViewer = ({ resource }: MediaProps) => {
                 </li>
                 <li>
                   <button
-                    className={`w-full border-4 border-white`}
+                    className={`w-full border-4 ${filter === "sizzle" ? 'border-white bg-white text-zinc-700' : 'border-transparent' }`}
                     onClick={() => setFilter('sizzle')}
                     >
                     <CldImage
+                      key={JSON.stringify(transformation)}
                       width={156}
                       art='sizzle'
                       height={156}
                       crop="fill"
-                      src={resource[0].public_id}
+                      src={resource[0].secure_url}
                       sizes="(max-width: 768px) 50vw,
                       (max-width: 1200px) 33vw,
                       25vw"
@@ -369,13 +499,18 @@ const MediaViewer = ({ resource }: MediaProps) => {
             </TabsContent>
           </Tabs>
           <SheetFooter className="gap-2 sm:flex-col">
-            <div className="grid grid-cols-[1fr_4rem] gap-2">
+            {
+              hasTransformations ? 
+              <div className="grid grid-cols-[1fr_4rem] gap-2">
               <Button
                 variant="ghost"
+                onClick={handleSave}
                 className="w-full h-14 text-left justify-center items-center bg-blue-500"
               >
                 <span className="text-[1.01rem]">
-                  Save
+                  {
+                    saving?.state === 'saving' ? <Loader2 className='w-5 h-5 animate-spin' /> : 'Save'
+                  }
                 </span>
               </Button>
               <DropdownMenu>
@@ -388,22 +523,33 @@ const MediaViewer = ({ resource }: MediaProps) => {
                     <ChevronDown className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" data-exclude-close-on-click={true}>
+                <DropdownMenuContent className="w-56" onClick={handleSaveCopy} data-exclude-close-on-click={true}>
                   <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <span>Save as Copy</span>
+                    <DropdownMenuItem >
+                      <span>
+                        {
+                          saving?.state === 'savingcopy' ? <Loader2 className='w-5 h-5 animate-spin' /> : ' Save as Copy'
+                        }                       
+                      </span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            :
+            ''
+            }
+            
             <Button
               variant="outline"
-              className="w-full h-14 text-left justify-center items-center bg-transparent border-zinc-600"
-              onClick={() => closeMenus()}
+              className={`w-full h-14 text-left justify-center items-center bg-transparent border-zinc-600 ${hasTransformations ? 'bg-red-500 hover:bg-red-400 hover:text-[#fff]':'bg-transparent'}`}
+              onClick={() => {
+                closeMenus()
+                resetTransformations()
+              }}
             >
               <span className="text-[1.01rem]">
-                Close
+                {hasTransformations ? 'Cancel' : 'Close'}
               </span>
             </Button>
           </SheetFooter>
@@ -483,9 +629,11 @@ const MediaViewer = ({ resource }: MediaProps) => {
       <div className="relative flex justify-center items-center align-center w-full h-full">
         <CldImage
           className="object-contain"
+          key={`${JSON.stringify(transformation)}-${version}`}
           width={resource[0].width}
           height={resource[0].height}
-          src={resource[0].public_id}
+          src={resource[0].secure_url}
+          version={version}
           sizes="(max-width: 768px) 50vw,
           (max-width: 1200px) 33vw,
           25vw"
