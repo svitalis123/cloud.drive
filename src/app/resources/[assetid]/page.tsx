@@ -6,6 +6,7 @@ Cloudinary.config({
   api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
+
 async function Resource({params}: {params: {assetid: string}}) {
   const {resources} = await Cloudinary.api.resources_by_asset_ids([params.assetid]);
   return (
