@@ -19,6 +19,7 @@ interface MediaGalleryProps {
 
 const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) => {
   const {resources} =  useResources({intialResources, tag});
+  console.log("resources tan stack", resources);
   const [selected, setSelected] = useState<Array<string>>([]);
   const [creation, setCreation] = useState();
 
