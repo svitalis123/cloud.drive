@@ -12,7 +12,8 @@ export function useResources(options?: MediaGalleryTypes){
   const { data: resources } = useQuery({
     queryKey:['resources', options?.tag],
     queryFn: async () => {
-      const {data} = await fetch('/api/resources').then(response => response.json())
+      const {data} = await fetch('/api/resources').then(response => response.json());
+      console.log("prefetch", data);
       return data;
     },
     initialData: options?.intialResources
