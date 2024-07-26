@@ -9,6 +9,7 @@ Cloudinary.config({
 
 export async function GET(){
   const { resources } = await Cloudinary.api.resources_by_tag(String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME))
+  console.log("the source api", resources);
   return Response.json({
     data: resources
   })
