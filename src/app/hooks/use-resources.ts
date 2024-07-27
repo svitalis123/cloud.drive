@@ -18,6 +18,7 @@ export function useResources(options?: MediaGalleryTypes){
       return data;
     },
     initialData: options?.intialResources,
+    staleTime: 0,
     enabled: false
   })
 
