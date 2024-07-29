@@ -52,7 +52,8 @@ export function useResources(options?: MediaGalleryTypes){
     },
     onSettled: () => {
       // Always refetch after error or success:
-      queryClient.invalidateQueries({ queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)] })
+      queryClient.invalidateQueries({ queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)] });
+      queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]})
     },
   })
   
