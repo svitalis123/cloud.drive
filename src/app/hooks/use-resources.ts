@@ -14,13 +14,14 @@ export function useResources(options?: MediaGalleryTypes){
     queryKey:['resources', options?.tag],
     queryFn: async () => {
       const {data} = await fetch('/api/resources').then(response => response.json());
-      console.log("prefetch", data);
+      
       return data;
     },
     initialData: options?.intialResources,
     staleTime: 0,
     enabled: false
   })
+  console.log("prefetch", resources, "this is refetched data", refetch);
 
   useEffect(() => {
     refetch();
