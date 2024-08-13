@@ -10,7 +10,7 @@ Cloudinary.config({
 
 
 export default async function Home() {
-  const { resources } = await Cloudinary.api.resources_by_tag(String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME), { cache: 'no-store' });
+  const { resources } = await Cloudinary.api.resources_by_tag(String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME));
   console.log("server data", resources);
   return (
     <div className="h-full mt-6">
