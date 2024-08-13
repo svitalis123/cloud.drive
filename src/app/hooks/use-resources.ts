@@ -10,8 +10,8 @@ interface MediaGalleryTypes {
 
 export function useResources(options?: MediaGalleryTypes){
   const queryClient = useQueryClient();
-  const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
-  console.log("refetched", refetched)
+  // const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
+  // console.log("refetched", refetched)
   const { data: resources, refetch } = useQuery({
     queryKey:['resources', options?.tag],
     queryFn: async () => {
@@ -20,7 +20,7 @@ export function useResources(options?: MediaGalleryTypes){
       
       return data;
     },
-    initialData: options?.intialResources,
+    // initialData: options?.intialResources,
     staleTime: 0,
     enabled: false
   })
