@@ -634,9 +634,9 @@ const MediaViewer = ({ resource }: MediaProps) => {
           height={resource[0].height}
           src={resource[0].secure_url}
           version={version}
-          sizes="(max-width: 768px) 50vw,
-          (max-width: 1200px) 33vw,
-          25vw"
+          // sizes="(max-width: 768px) 50vw,
+          // (max-width: 1200px) 33vw,
+          // 25vw"
           {...transformation}
           alt={`image ${resource[0].public_id}`}
           style={imgStyles}

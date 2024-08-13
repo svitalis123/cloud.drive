@@ -139,9 +139,9 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
                           width={resource.width}
                           height={resource.height}
                           src={resource.secure_url}
-                          sizes="(max-width: 768px) 50vw,
-                          (max-width: 1200px) 33vw,
-                          25vw"
+                          // sizes="(max-width: 768px) 50vw,
+                          // (max-width: 1200px) 33vw,
+                          // 25vw"
                           alt={`image ${resource.secure_url}`}
                         />
                       </Link>
