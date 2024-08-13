@@ -8,7 +8,7 @@ Cloudinary.config({
 
 
 export async function GET(){
-  const { resources } = await Cloudinary.api.resources_by_tag('media')
+  const { resources } = await Cloudinary.api.resources_by_tag('media', {cache: 'no-store'})
  
   return Response.json({
     data: resources
