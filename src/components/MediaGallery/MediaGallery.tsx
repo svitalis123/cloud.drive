@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, X, Save } from 'lucide-react';
-import { CldImage } from 'next-cloudinary';
+import CldImage from '../MediaViewer/CldImage';
 
 import Container from '@/components/Container';
 import { Button } from '@/components/ui/button';
