@@ -8,9 +8,10 @@ Cloudinary.config({
 
 
 export async function GET(){
-  const { resources } = await Cloudinary.api.resources_by_tag('media', {timestamp: new Date().getTime() })
+  const { resources } = await Cloudinary.api.resources_by_tag('media')
  
   return Response.json({
     data: resources
   })
 }
+//  {timestamp: new Date().getTime() }
