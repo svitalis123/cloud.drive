@@ -9,10 +9,13 @@ interface MediaGalleryTypes {
 }
 
 export function useResources(options?: MediaGalleryTypes){
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
+  const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
+  console.log("refetched", refetched)
   const { data: resources, refetch } = useQuery({
     queryKey:['resources', options?.tag],
     queryFn: async () => {
+     
       const {data} = await fetch('/api/resources').then(response => response.json());
       
       return data;
@@ -54,7 +57,7 @@ export function useResources(options?: MediaGalleryTypes){
     onSettled: () => {
       // Always refetch after error or success:
       queryClient.invalidateQueries({ queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)] });
-      queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]})
+      queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
     },
   })
   
