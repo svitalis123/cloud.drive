@@ -10,14 +10,10 @@ interface MediaGalleryTypes {
 
 export function useResources(options?: MediaGalleryTypes) {
   const queryClient = useQueryClient();
-  // const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
-  // console.log("refetched", refetched)
   const { data: resources, refetch } = useQuery({
     queryKey: ["resources", "media"],
     queryFn: async () => {
-      const { data } = await fetch("/api/resources", {
-        cache: "no-store",
-      }).then((response) => response.json());
+      const { data } = await fetch("/api/resources").then((response) => response.json());
       console.log("returned data", data);
       return data;
     },
@@ -26,10 +22,6 @@ export function useResources(options?: MediaGalleryTypes) {
     enabled: false,
   });
   console.log("prefetch", resources, "this is refetched data", refetch);
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
 
   const addResourcesMutation = useMutation({
     mutationFn: (newResources: Array<ResourcesTypes>) => {

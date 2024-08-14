@@ -179,7 +179,6 @@ const MediaViewer = ({ resource }: MediaProps) => {
     try {
       const results  = await fetch('/api/saver', {
         method: 'POST',
-        cache: 'no-store',
         body: JSON.stringify({
           publicId: resource[0].public_id,
           url        
@@ -215,7 +214,6 @@ const MediaViewer = ({ resource }: MediaProps) => {
     try {
       const {data}  = await fetch('/api/saver', {
         method: 'POST',
-        cache: 'no-store',
         body: JSON.stringify({
           url        
         })
@@ -238,7 +236,6 @@ const MediaViewer = ({ resource }: MediaProps) => {
     try {
       const results = await fetch('/api/deleteasset', {
         method: 'POST',
-        cache: 'no-store',
         body: JSON.stringify({
           publicId: resource[0].public_id
         })
