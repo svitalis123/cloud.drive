@@ -157,5 +157,5 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
     </>
   )
 }
-
+export const fetchCache = 'force-no-store';
 export default MediaGallery;

@@ -26,5 +26,5 @@ const UploadButton = () => {
     </div>
   )
 }
-
+export const fetchCache = 'force-no-store';
 export default UploadButton
