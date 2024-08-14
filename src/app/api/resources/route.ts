@@ -14,4 +14,4 @@ export async function GET(){
     data: resources
   })
 }
-//  
+export const revalidate = 0;

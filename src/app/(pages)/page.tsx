@@ -8,7 +8,7 @@ Cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-export const fetchCache = 'force-no-store';
+
 export default async function Home() {
   const { resources } = await Cloudinary.api.resources_by_tag(String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME));
   console.log("server data", resources);

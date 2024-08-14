@@ -648,5 +648,5 @@ const MediaViewer = ({ resource }: MediaProps) => {
     </div>
   )
 };
-export const fetchCache = 'force-no-store';
+
 export default MediaViewer;

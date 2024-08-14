@@ -15,5 +15,5 @@ async function Resource({params}: {params: {assetid: string}}) {
     />
   );
 }
-export const fetchCache = 'force-no-store';
+
 export default Resource;

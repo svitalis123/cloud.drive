@@ -13,3 +13,5 @@ export async function POST(request: Request){
     data: results
   })
 }
+
+export const revalidate = 0;
