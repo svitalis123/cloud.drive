@@ -1,29 +1,30 @@
-'use client'
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import { ResourcesTypes } from '../types/types';
-import { useEffect } from 'react';
+"use client";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ResourcesTypes } from "../types/types";
+import { useEffect } from "react";
 
 interface MediaGalleryTypes {
-  intialResources?: Array<ResourcesTypes>
-  tag?: string
+  intialResources?: Array<ResourcesTypes>;
+  tag?: string;
 }
-export const fetchCache = 'force-no-store';
-export function useResources(options?: MediaGalleryTypes){
+
+export function useResources(options?: MediaGalleryTypes) {
   const queryClient = useQueryClient();
   // const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
   // console.log("refetched", refetched)
   const { data: resources, refetch } = useQuery({
-    queryKey:['resources', 'media'],
+    queryKey: ["resources", "media"],
     queryFn: async () => {
-     
-      const {data} = await fetch('/api/resources', { cache: 'no-store' }).then(response => response.json());
-      console.log("returned data", data)
+      const { data } = await fetch("/api/resources", {
+        cache: "no-store",
+      }).then((response) => response.json());
+      console.log("returned data", data);
       return data;
     },
     // initialData: options?.intialResources,
     staleTime: 0,
-    enabled: false
-  })
+    enabled: false,
+  });
   console.log("prefetch", resources, "this is refetched data", refetch);
 
   useEffect(() => {
@@ -37,30 +38,54 @@ export function useResources(options?: MediaGalleryTypes){
     },
     onMutate: async (newResources) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)] })
+      await queryClient.cancelQueries({
+        queryKey: [
+          "resources",
+          String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME),
+        ],
+      });
 
       // Snapshot the previous value
-      const previousResources = queryClient.getQueryData(['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)])
+      const previousResources = queryClient.getQueryData([
+        "resources",
+        String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME),
+      ]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)], (old: Array<ResourcesTypes> = []) => {
-        return [...newResources, ...old]
-      })
+      queryClient.setQueryData(
+        ["resources", String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)],
+        (old: Array<ResourcesTypes> = []) => {
+          return [...newResources, ...old];
+        }
+      );
 
       // Return a context object with the snapshotted value
-      return { previousResources }
+      return { previousResources };
     },
     onError: (err, newResources, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)], context?.previousResources)
+      queryClient.setQueryData(
+        ["resources", String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)],
+        context?.previousResources
+      );
     },
     onSettled: () => {
       // Always refetch after error or success:
-      queryClient.invalidateQueries({ queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)] });
-      queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});
+      queryClient.invalidateQueries({
+        queryKey: [
+          "resources",
+          String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME),
+        ],
+      });
+      queryClient.refetchQueries({
+        queryKey: [
+          "resources",
+          String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME),
+        ],
+      });
     },
-  })
-  
+  });
+
   function addResources(results: Array<ResourcesTypes>) {
     addResourcesMutation.mutate(results);
   }
@@ -72,9 +97,8 @@ export function useResources(options?: MediaGalleryTypes){
   //   queryClient.invalidateQueries({queryKey:['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]})
   // }
 
-  
   return {
     resources,
-    addResources
-  }
+    addResources,
+  };
 }

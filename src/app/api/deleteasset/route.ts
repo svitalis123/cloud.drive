@@ -6,7 +6,6 @@ Cloudinary.config({
   api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
-export const runtime = 'edge';
 export async function POST(request: Request){
   const { publicId } = await request.json();
   const results = await Cloudinary.api.delete_resources([publicId])
