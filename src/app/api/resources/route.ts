@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+
 import {v2 as Cloudinary} from 'cloudinary';
 
 Cloudinary.config({
@@ -7,7 +7,7 @@ Cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-
+export const runtime = 'edge';
 export async function GET(){
   const { resources } = await Cloudinary.api.resources_by_tag('media', {timestamp: new Date().getTime() })
  

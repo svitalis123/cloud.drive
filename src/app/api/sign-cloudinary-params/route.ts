@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+
 import { v2 as cloudinary } from "cloudinary";
  
 cloudinary.config({
@@ -6,7 +6,7 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
- 
+export const runtime = 'edge';
 export async function POST(request: Request) {
   const body = await request.json();
   const { paramsToSign } = body;
