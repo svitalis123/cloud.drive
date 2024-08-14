@@ -15,7 +15,7 @@ import { CldImageProps, getCldImageUrl } from 'next-cloudinary';
 import CldImage from './CldImage';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-export const fetchCache = 'force-no-store';
+
 interface Deletion {
   state: string;
 }
@@ -648,5 +648,5 @@ const MediaViewer = ({ resource }: MediaProps) => {
     </div>
   )
 };
-
+export const fetchCache = 'force-no-store';
 export default MediaViewer;

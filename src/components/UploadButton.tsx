@@ -3,7 +3,7 @@ import React from 'react';
 import { CldUploadButton, CloudinaryUploadWidgetResults } from 'next-cloudinary';
 import { useResources } from '@/app/hooks/use-resources';
 import { ResourcesTypes } from '@/app/types/types';
-export const fetchCache = 'force-no-store';
+
 const UploadButton = () => {
   const { addResources } = useResources();
   const handleSucess = (results: CloudinaryUploadWidgetResults) => {
@@ -26,5 +26,5 @@ const UploadButton = () => {
     </div>
   )
 }
-
+export const fetchCache = 'force-no-store';
 export default UploadButton
