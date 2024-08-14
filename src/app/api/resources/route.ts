@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import {v2 as Cloudinary} from 'cloudinary';
 
 Cloudinary.config({

@@ -7,7 +7,7 @@ interface MediaGalleryTypes {
   intialResources?: Array<ResourcesTypes>
   tag?: string
 }
-
+export const fetchCache = 'force-no-store';
 export function useResources(options?: MediaGalleryTypes){
   const queryClient = useQueryClient();
   // const refetched =  queryClient.refetchQueries({queryKey: ['resources', String(process.env.NEXT_PUBLIC_CLOUDINARY_TAG_NAME)]});

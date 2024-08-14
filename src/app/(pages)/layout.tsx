@@ -31,5 +31,3 @@ export default function RootLayout({
     </div>
   )
 }
-
-export const fetchCache = 'force-no-store';

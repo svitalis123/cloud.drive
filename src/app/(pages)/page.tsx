@@ -1,7 +1,7 @@
 import MediaGallery from '@/components/MediaGallery';
 import { v2 as Cloudinary } from 'cloudinary';
 import { ResourcesTypes } from '../types/types';
-
+export const fetchCache = 'force-no-store';
 Cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
@@ -21,4 +21,3 @@ export default async function Home() {
     </div>
   )
 }
-export const fetchCache = 'force-no-store';

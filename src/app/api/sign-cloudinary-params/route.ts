@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { v2 as cloudinary } from "cloudinary";
  
 cloudinary.config({
@@ -14,3 +15,4 @@ export async function POST(request: Request) {
   
   return Response.json({ signature });
 }
+

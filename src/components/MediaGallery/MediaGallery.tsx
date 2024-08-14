@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ResourcesTypes } from '@/app/types/types';
 import { useResources } from '@/app/hooks/use-resources';
+export const fetchCache = 'force-no-store';
 interface MediaGalleryProps {
   resources: Array<ResourcesTypes>
   tag: string

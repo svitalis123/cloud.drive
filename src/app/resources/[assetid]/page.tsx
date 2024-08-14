@@ -1,6 +1,6 @@
 import MediaViewer from '@/components/MediaViewer';
 import {v2 as Cloudinary} from 'cloudinary';
-
+export const fetchCache = 'force-no-store';
 Cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
