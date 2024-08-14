@@ -16,7 +16,7 @@ export function useResources(options?: MediaGalleryTypes){
     queryKey:['resources', 'media'],
     queryFn: async () => {
      
-      const {data} = await fetch('/api/resources').then(response => response.json());
+      const {data} = await fetch('/api/resources', { cache: 'no-store' }).then(response => response.json());
       console.log("returned data", data)
       return data;
     },
