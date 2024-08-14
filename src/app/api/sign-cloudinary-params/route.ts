@@ -15,5 +15,3 @@ export async function POST(request: Request) {
   
   return Response.json({ signature });
 }
-
-export const revalidate = 0;

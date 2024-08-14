@@ -23,8 +23,6 @@ export function useResources(options?: MediaGalleryTypes) {
     },
     // initialData: options?.intialResources,
     staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
     enabled: false,
   });
   console.log("prefetch", resources, "this is refetched data", refetch);
