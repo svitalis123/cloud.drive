@@ -5,7 +5,9 @@ import { useResources } from '@/app/hooks/use-resources';
 import { ResourcesTypes } from '@/app/types/types';
 
 const UploadButton = () => {
-  const { addResources } = useResources();
+  const { addResources } = useResources({
+    disableFetch: true
+  });
   const handleSucess = (results: CloudinaryUploadWidgetResults) => {
     addResources([results.info as ResourcesTypes])
   }

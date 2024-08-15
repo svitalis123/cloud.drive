@@ -5,11 +5,13 @@ import { useEffect } from "react";
 
 interface MediaGalleryTypes {
   intialResources?: Array<ResourcesTypes>;
+  disableFetch?: boolean;
   tag?: string;
 }
 
 export function useResources(options?: MediaGalleryTypes) {
   const queryClient = useQueryClient();
+  const { disableFetch = false } = options || {};
   const { data: resources, refetch } = useQuery({
     queryKey: ["resources", "media"],
     queryFn: async () => {
@@ -17,9 +19,8 @@ export function useResources(options?: MediaGalleryTypes) {
       console.log("returned data", data);
       return data;
     },
-    // initialData: options?.intialResources,
-    staleTime: 0,
-    enabled: false,
+    initialData: options?.intialResources,
+    enabled: !disableFetch,
   });
   console.log("prefetch", resources, "this is refetched data", refetch);
 
