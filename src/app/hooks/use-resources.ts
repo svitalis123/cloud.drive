@@ -16,13 +16,12 @@ export function useResources(options?: MediaGalleryTypes) {
     queryKey: ["resources", "media"],
     queryFn: async () => {
       const { data } = await fetch("/api/resources").then((response) => response.json());
-      console.log("returned data", data);
+      
       return data;
     },
     initialData: options?.intialResources,
     enabled: !disableFetch,
   });
-  console.log("prefetch", resources, "this is refetched data", refetch);
 
   const addResourcesMutation = useMutation({
     mutationFn: (newResources: Array<ResourcesTypes>) => {
