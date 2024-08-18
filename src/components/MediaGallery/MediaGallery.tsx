@@ -1,27 +1,94 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Plus, X, Save } from 'lucide-react';
-import CldImage from '../MediaViewer/CldImage';
+import { useState } from "react";
+import Link from "next/link";
+import { Plus, X, Save, Crop, Loader2 } from "lucide-react";
+import CldImage from "../MediaViewer/CldImage";
 
-import Container from '@/components/Container';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ResourcesTypes } from '@/app/types/types';
-import { useResources } from '@/app/hooks/use-resources';
+import Container from "@/components/Container";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ResourcesTypes } from "@/app/types/types";
+import { useResources } from "@/app/hooks/use-resources";
+import Creationoverlay from "@/lib/creation";
 
 interface MediaGalleryProps {
-  resources: Array<ResourcesTypes>
-  tag: string
+  resources: Array<ResourcesTypes>;
+  tag: string;
 }
 
-const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) => {
-  const {resources} =  useResources({intialResources, tag});
+interface Creation {
+  state: string;
+  url: string;
+  type: string;
+}
+
+const MediaGallery = ({
+  resources: intialResources,
+  tag,
+}: MediaGalleryProps) => {
+  const { resources, addResources } = useResources({ intialResources, tag });
   const [selected, setSelected] = useState<Array<string>>([]);
-  const [creation, setCreation] = useState();
+  const [creation, setCreation] = useState<Creation>();
+
+  /**
+   *handle creation function
+   */
+
+  function handleCollageCreation() {
+    if(selected.length > 4) return;
+    setCreation({
+      state: "created",
+      url: Creationoverlay(selected),
+      type: "collage",
+    });
+  }
+
+  /**
+   * handle on save creation
+   */
+
+  async function handleSaveCreation(){
+    
+    if( typeof creation?.url !== 'string' || creation.state === "creating"){
+      return;
+    }
+    
+    setCreation((prev) => {
+      if (!prev) return;
+       return {
+       ...prev,
+       state: 'creating'
+      }
+     })
+   
+    await fetch(creation?.url);
+
+    const { data } = await fetch('/api/saver', {
+      method: 'POST',
+      body: JSON.stringify({
+        url: creation.url
+      })
+    }).then(response => response.json())
+    addResources([data]);
+    setCreation(undefined);
+    setSelected([]);
+  }
+
 
   /**
    * handleOnClearSelection
@@ -36,7 +103,7 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
    */
 
   function handleOnCreationOpenChange(isOpen: boolean) {
-    if ( !isOpen ) {
+    if (!isOpen) {
       setCreation(undefined);
     }
   }
@@ -50,9 +117,34 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
           <DialogHeader>
             <DialogTitle>Save your creation?</DialogTitle>
           </DialogHeader>
+          {
+            creation?.url && (
+              <CldImage 
+                src={creation?.url}
+                height="1200"
+                width="1200"
+                alt="collage image"
+                preserveTransformations
+                crop={
+                  {
+                    type: 'fill',
+                    source: true
+                  }
+                }
+              />
+            )
+          }
           <DialogFooter className="justify-end sm:justify-end">
-            <Button>
-              <Save className="h-4 w-4 mr-2" />
+            <Button onClick={handleSaveCreation}>
+              {
+                creation?.state === 'creating' ? 
+                (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ):
+                (
+                  <Save className="h-4 w-4 mr-2" />
+                )
+              }
               Save to Library
             </Button>
           </DialogFooter>
@@ -73,7 +165,7 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
               </li>
             </ul>
             <p>
-              <span>{ selected?.length } Selected</span>
+              <span>{selected?.length} Selected</span>
             </p>
           </div>
           <ul className="flex items-center gap-4">
@@ -87,9 +179,14 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">
                   <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <span>Option</span>
-                    </DropdownMenuItem>
+                    {
+                      selected.length > 1 && (
+                        <DropdownMenuItem onClick={handleCollageCreation}>
+                          <span>Collage</span>
+                        </DropdownMenuItem>
+                      )
+                    }
+                    
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -109,8 +206,10 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
 
                 function handleOnSelectResource(checked: boolean) {
                   setSelected((prev) => {
-                    if ( checked ) {
-                      return Array.from(new Set([...(prev || []), resource.public_id]));
+                    if (checked) {
+                      return Array.from(
+                        new Set([...(prev || []), resource.public_id])
+                      );
                     } else {
                       return prev.filter((id) => id !== resource.public_id);
                     }
@@ -118,21 +217,33 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
                 }
 
                 return (
-                  <li key={resource.public_id} className="bg-white dark:bg-zinc-700">
+                  <li
+                    key={resource.public_id}
+                    className="bg-white dark:bg-zinc-700"
+                  >
                     <div className="relative group">
-                      <label className={`absolute ${isChecked ? 'opacity-100' : 'opacity-0'} group-hover:opacity-100 transition-opacity top-3 left-3 p-1`} htmlFor={resource.public_id}>
+                      <label
+                        className={`absolute ${
+                          isChecked ? "opacity-100" : "opacity-0"
+                        } group-hover:opacity-100 transition-opacity top-3 left-3 p-1`}
+                        htmlFor={resource.public_id}
+                      >
                         <span className="sr-only">
-                          Select Image &quot;{ resource.public_id }&quot;
+                          Select Image &quot;{resource.public_id}&quot;
                         </span>
                         <Checkbox
-                          className={`w-6 h-6 rounded-full bg-white shadow ${isChecked ? 'border-blue-500' : 'border-zinc-200'}`}
+                          className={`w-6 h-6 rounded-full bg-white shadow ${
+                            isChecked ? "border-blue-500" : "border-zinc-200"
+                          }`}
                           id={resource.public_id}
                           onCheckedChange={handleOnSelectResource}
                           checked={isChecked}
                         />
                       </label>
                       <Link
-                        className={`block cursor-pointer border-8 transition-[border] ${isChecked ? 'border-blue-500' : 'border-white'}`}
+                        className={`block cursor-pointer border-8 transition-[border] ${
+                          isChecked ? "border-blue-500" : "border-white"
+                        }`}
                         href={`/resources/${resource.asset_id}`}
                       >
                         <CldImage
@@ -147,14 +258,14 @@ const MediaGallery = ({ resources: intialResources, tag }: MediaGalleryProps) =>
                       </Link>
                     </div>
                   </li>
-                )
+                );
               })}
             </ul>
           )}
         </form>
       </Container>
     </>
-  )
-}
+  );
+};
 
 export default MediaGallery;

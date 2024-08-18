@@ -7,8 +7,8 @@ import Providers from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Drive Library',
-  description: 'Drive Library',
+  title: 'Photo Pro',
+  description: 'Discover PhotoPro: Your all-in-one photo editing solution. Upload, enhance with AI, transform, apply filters, and create collages effortlessly. Professional results, user-friendly interface. Start your photo editing journey today',
 }
 
 export default function RootLayout({
