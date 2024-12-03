@@ -28,6 +28,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ title, icon: Icon, descriptio
   </Card>
 );
 
+
 const PhotoAppHome: React.FC = () => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isSectionVisible, setIsSectionVisible] = useState(true);
